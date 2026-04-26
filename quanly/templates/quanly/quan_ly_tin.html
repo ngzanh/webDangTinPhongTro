@@ -1,9 +1,11 @@
 <!DOCTYPE html>
+{% load humanize static %}
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản lý tin đăng - TuiKyCuc</title>
+    <link rel="icon" href="https://i.ibb.co/LhZ7XG3C/logo1.png" type="image/png" >
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -19,7 +21,7 @@
                 
                 <div class="flex items-center">
                     <a href="/" class="flex-shrink-0 flex items-center gap-2">
-                        <i class="fa-solid fa-house-chimney text-blue-600 text-2xl"></i>
+                        <img src="{% static 'logo.png' %}" alt="Logo" class="h-10 w-auto">
                         <span class="font-bold text-xl tracking-tight text-gray-900">TuiKyCuc</span>
                     </a>
                 </div>
@@ -139,7 +141,7 @@
                 <a href="https://www.instagram.com/_qh163/" class="hover:text-pink-500 transition"><i class="fa-brands fa-instagram"></i></a>
                 <a href="https://www.youtube.com/@TUITÊNBÔ" class="hover:text-red-500 transition"><i class="fa-brands fa-youtube"></i></a>
             </div>
-            <p class="mt-8 text-sm text-gray-500">© TuiKyCuc. Đồ án Python - Quốc Huy.</p>
+            <p class="mt-8 text-sm text-gray-500">© TuiKyCuc</p>
         </div>
     </footer>
 

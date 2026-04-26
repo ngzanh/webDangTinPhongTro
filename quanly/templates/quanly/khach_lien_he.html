@@ -1,9 +1,11 @@
 <!DOCTYPE html>
+{% load humanize static %}
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Khách Liên Hệ - TuiKyCuc</title>
+    <link rel="icon" href="https://i.ibb.co/LhZ7XG3C/logo1.png" type="image/png" >
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -14,7 +16,7 @@
             <div class="flex justify-between h-16">
                 <div class="flex items-center">
                     <a href="{% url 'trang_chu' %}" class="flex-shrink-0 flex items-center gap-2">
-                        <i class="fa-solid fa-house-chimney text-blue-600 text-2xl"></i>
+                        <img src="{% static 'logo.png' %}" alt="Logo" class="h-10 w-auto">
                         <span class="font-bold text-xl tracking-tight text-gray-900">TuiKyCuc</span>
                     </a>
                 </div>

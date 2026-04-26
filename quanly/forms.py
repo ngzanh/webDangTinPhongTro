@@ -1,7 +1,10 @@
 from django import forms
 from .models import PhongTro
+from django.contrib.auth.forms import UserCreationForm 
+from django.contrib.auth.models import User
 
 class PhongTroForm(forms.ModelForm):
+   
     class Meta:
         model = PhongTro
         # Liệt kê các cột trong bảng PhongTro mà bạn muốn người dùng nhập
@@ -30,3 +33,21 @@ class PhongTroForm(forms.ModelForm):
                 'placeholder': 'VD: 120 An Liễng, Đống Đa'
             }),
         }
+
+class TaoTaiKhoanForm(UserCreationForm):
+    class Meta:
+        model = User
+        fields = ['username']
+        labels = {
+            'username': 'Tên đăng nhập',
+            'unique': 'Tên đăng nhập này đã có người sử dụng. Vui lòng chọn tên khác!',
+            'invalid': 'Tên đăng nhập chỉ được chứa chữ cái, số và các ký tự @/./+/-/_'
+        }
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Vòng lặp này sẽ đi qua tất cả các ô nhập (username, password...) 
+        # và xóa sạch dòng chữ hướng dẫn mặc định
+        for field in self.fields.values():
+            field.help_text = ''
+        self.error_messages['password_mismatch'] = 'Hai mật khẩu bạn nhập không khớp nhau. Vui lòng kiểm tra lại!'

@@ -11,6 +11,7 @@ class PhongTro(models.Model):
     gia_thue = models.IntegerField()                 # Số nguyên (Ví dụ: 3000000)
 
     @property
+    
     def gia_thue_co_cham(self):
         # Format số bằng dấu phẩy, sau đó thay thế dấu phẩy thành dấu chấm
         if self.gia_thue:
@@ -35,7 +36,7 @@ class PhongTro(models.Model):
     
     # Tự động lấy ngày giờ lúc đăng bài
     ngay_dang = models.DateTimeField(auto_now_add=True)
-
+    nguoi_thich = models.ManyToManyField(User, related_name='phong_yeu_thich', blank=True)
     # Hàm này giúp hiển thị tên phòng trọ thay vì các chữ Object khó hiểu
     def __str__(self):
         return self.tieu_de
@@ -50,3 +51,12 @@ class KhachLienHe(models.Model):
 
     def __str__(self):
         return f"{self.ten_khach} nhắn hỏi phòng: {self.phong.tieu_de}"
+
+#List Hinh Anh
+class HinhAnhPhong(models.Model):
+    # Khóa ngoại liên kết với phòng trọ, related_name giúp ta gọi ngược từ phòng trọ ra các ảnh
+    phong = models.ForeignKey(PhongTro, related_name='cac_hinh_anh', on_delete=models.CASCADE)
+    anh = models.ImageField(upload_to='phongtro_chitiet/')
+
+    def __str__(self):
+        return f"Ảnh phụ của phòng: {self.phong.tieu_de}"

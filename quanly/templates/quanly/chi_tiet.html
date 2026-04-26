@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+{% load humanize static %}
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
@@ -18,7 +19,7 @@
             <div class="flex justify-between h-16">
                 <div class="flex items-center">
                     <a href="/" class="flex-shrink-0 flex items-center gap-2">
-                        <i class="fa-solid fa-house-chimney text-blue-600 text-2xl"></i>
+                        <img src="{% static 'logo.png' %}" alt="Logo" class="h-10 w-auto">
                         <span class="font-bold text-xl tracking-tight text-gray-900">TuiKyCuc</span>
                     </a>
                 </div>
@@ -39,19 +40,125 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div class="lg:col-span-2 space-y-6">
-                <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 h-[400px]">
+                <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 h-[400px] relative group" id="slider-container">
                     {% if phong.hinh_anh %}
-                        <img src="{{ phong.hinh_anh.url }}" class="w-full h-full object-cover">
+                        <div id="image-track" class="relative w-full h-full">
+                            <div class="slide-item absolute w-full h-full transition-opacity duration-700 opacity-100 z-10">
+                                <img src="{{ phong.hinh_anh.url }}" class="w-full h-full object-contain" alt="Ảnh chính">
+                            </div>
+                            
+                            {% for hinh in phong.cac_hinh_anh.all %}
+                            <div class="slide-item absolute w-full h-full transition-opacity duration-700 opacity-0 z-0">
+                                <img src="{{ hinh.anh.url }}" class="w-full h-full object-contain" alt="Ảnh phụ">
+                            </div>
+                            {% endfor %}
+                        </div>
+                
+                        <button onclick="prevSlide()" class="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 text-white w-10 h-10 rounded-full flex items-center justify-center z-20 opacity-0 group-hover:opacity-100 transition-all cursor-pointer">
+                            <i class="fa-solid fa-chevron-left"></i>
+                        </button>
+                
+                        <button onclick="nextSlide()" class="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 text-white w-10 h-10 rounded-full flex items-center justify-center z-20 opacity-0 group-hover:opacity-100 transition-all cursor-pointer">
+                            <i class="fa-solid fa-chevron-right"></i>
+                        </button>
                     {% else %}
-                        <div class="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400">
+                        <div class="w-full h-full bg-gray-200 flex flex-col items-center justify-center text-gray-400">
                             <i class="fa-regular fa-image text-5xl mb-2"></i>
                             <p>Không có hình ảnh</p>
                         </div>
                     {% endif %}
                 </div>
+                
+                {% if phong.hinh_anh %}
+                <div class="flex gap-3 mt-4 overflow-x-auto py-2 scrollbar-hide" id="thumbnail-list">
+                    <div class="thumb-item relative flex-shrink-0 w-24 h-16 cursor-pointer rounded-lg overflow-hidden border-2 transition-all duration-300 active-thumb border-blue-600 ring-2 ring-blue-200" 
+                         onclick="currentSlide(0)">
+                        <img src="{{ phong.hinh_anh.url }}" class="w-full h-full object-contain" alt="Thumbnail 0">
+                        <div class="thumb-overlay absolute inset-0 bg-black/20 transition-opacity opacity-0"></div>
+                    </div>
+                    
+                    {% for hinh in phong.cac_hinh_anh.all %}
+                    <div class="thumb-item relative flex-shrink-0 w-24 h-16 cursor-pointer rounded-lg overflow-hidden border-2 border-transparent transition-all duration-300" 
+                         onclick="currentSlide({{ forloop.counter }})">
+                        <img src="{{ hinh.anh.url }}" class="w-full h-full object-contain" alt="Thumbnail {{ forloop.counter }}">
+                        <div class="thumb-overlay absolute inset-0 bg-black/20 transition-opacity opacity-0"></div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <script>
+                    const slides = document.querySelectorAll('.slide-item');
+                    const thumbs = document.querySelectorAll('.thumb-item');
+                    let currentIndex = 0;
+                    let slideInterval;
+                
+                    function updateThumbnails() {
+                        thumbs.forEach((thumb, index) => {
+                            if (index === currentIndex) {
+                                thumb.classList.add('border-blue-600', 'ring-2', 'ring-blue-200');
+                                thumb.classList.remove('border-transparent');
+                                thumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                            } else {
+                                thumb.classList.remove('border-blue-600', 'ring-2', 'ring-blue-200');
+                                thumb.classList.add('border-transparent');
+                            }
+                        });
+                    }
+                
+                    function showSlide(index) {
+                        if (slides.length === 0) return;
+                        
+                        slides[currentIndex].classList.remove('opacity-100', 'z-10');
+                        slides[currentIndex].classList.add('opacity-0', 'z-0');
+                        
+                        currentIndex = index;
+                        slides[currentIndex].classList.remove('opacity-0', 'z-0');
+                        slides[currentIndex].classList.add('opacity-100', 'z-10');
+                        
+                        updateThumbnails();
+                    }
+                
+                    function currentSlide(n) {
+                        showSlide(n);
+                        resetInterval();
+                    }
+                
+                    function nextSlide() {
+                        if (slides.length <= 1) return;
+                        let newIndex = (currentIndex + 1) % slides.length;
+                        showSlide(newIndex);
+                    }
+                
+                    function prevSlide() {
+                        if (slides.length <= 1) return;
+                        let newIndex = (currentIndex - 1 + slides.length) % slides.length;
+                        showSlide(newIndex);
+                    }
+                
+                    function startAutoSlide() {
+                        if(slides.length > 1) {
+                            slideInterval = setInterval(nextSlide, 4000);
+                        }
+                    }
+                
+                    function resetInterval() {
+                        clearInterval(slideInterval);
+                        startAutoSlide();
+                    }
+                
+                    document.addEventListener('DOMContentLoaded', () => {
+                        if (slides.length > 0) {
+                            updateThumbnails();
+                            startAutoSlide();
+                        }
+                    });
+                </script>
+                {% endif %}
 
                 <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-gray-100">
                     <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">{{ phong.tieu_de }}</h1>
+                
+
                     <div class="flex items-center text-gray-500 mb-6 pb-6 border-b border-gray-100">
                         <i class="fa-solid fa-location-dot mr-2 text-red-500"></i>
                         <span>{{ phong.dia_chi }}, {{ phong.khu_vuc }}</span>

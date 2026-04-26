@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Chỉnh sửa tin</title>
+    <link rel="icon" href="https://i.ibb.co/LhZ7XG3C/logo1.png" type="image/png" >
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* CSS cho form Django */
@@ -21,9 +22,28 @@
             <a href="{% url 'trang_chu' %}" class="text-blue-600 hover:underline">← Quay lại</a>
         </div>
 
-        <form method="POST" enctype="multipart/form-data">
+        <form method="POST" action="" enctype="multipart/form-data">
             {% csrf_token %}
-            {{ form.as_p }}
+            {{ form.as_p }}<p class="mt-4 mb-6">
+                <label class="block font-bold mb-2 text-gray-700">Bộ ảnh kèm theo (Có thể bôi đen nhiều ảnh):</label>
+                <input type="file" name="hinh_anh_phu" multiple accept="image/*" 
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 cursor-pointer focus:outline-none focus:border-blue-500">
+            </p>
+            <div class="mb-6">
+                <label class="block font-bold mb-3 text-gray-700">Ảnh phụ hiện có (Chọn để xóa):</label>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-200">
+                    {% for hinh in phong_tro.cac_hinh_anh.all %}
+                    <div class="relative group">
+                        <img src="{{ hinh.anh.url }}" class="w-full h-24 object-cover rounded-lg shadow-sm">
+                        <label class="absolute top-1 right-1 bg-white/90 p-1 rounded-md shadow-sm cursor-pointer flex items-center gap-1 text-xs font-bold text-red-600">
+                            <input type="checkbox" name="xoa_anh_id" value="{{ hinh.id }}" class="w-4 h-4"> Xóa
+                        </label>
+                    </div>
+                    {% empty %}
+                    <p class="text-gray-400 text-sm italic col-span-full text-center">Chưa có ảnh phụ nào.</p>
+                    {% endfor %}
+                </div>
+            </div>
             
             <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl transition mt-6 text-lg shadow-md">
                 Lưu thông tin

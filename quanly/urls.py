@@ -14,6 +14,9 @@ urlpatterns = [
     path('quan-ly-tin/', views.quan_ly_tin, name='quan_ly_tin'),
     path('phong/<int:phong_id>/', views.chi_tiet_phong, name='chi_tiet_phong'),
     #Đường dẫn này có <int:phong_id> để Django biết bạn đang muốn xem chi tiết của phòng số mấy
+    #phòng trọ đã thích
+    path('thich-phong/<int:id>/', views.thich_phong, name='thich_phong'),
+    path('danh-sach-yeu-thich/', views.danh_sach_yeu_thich, name='danh_sach_yeu_thich'),
 
 
     #de chur xem duco khach gui 

@@ -4,17 +4,21 @@ from django.db.models import Q# dung cho form đang ky va dang nhap , tìm kiế
 
 #Phân đăng tin 
 from django.contrib.auth.decorators import login_required
-from .forms import PhongTroForm
+from .forms import PhongTroForm, TaoTaiKhoanForm
 
 # CÁC THƯ VIỆN NÀY ĐỂ LÀM TÀI KHOẢN
 from django.contrib.auth import login, logout, authenticate
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth.forms import AuthenticationForm
 
 #chỉnh sủa tin đăng 
 from django.shortcuts import render, redirect, get_object_or_404
 
 #Khách hàng liên hệ 
 from .models import KhachLienHe
+from .models import HinhAnhPhong
+
+from django.http import HttpResponseRedirect
+from django.urls import reverse
 
 
 # def trang_chu(request):
@@ -62,13 +66,13 @@ def trang_chu(request): # hàm chỉnh sửa để tìm kiếm
 # 1. HÀM ĐĂNG KÝ
 def dang_ky(request):
     if request.method == 'POST':
-        form = UserCreationForm(request.POST)
+        form = TaoTaiKhoanForm(request.POST) # Thay UserCreationForm bằng TaoTaiKhoanForm
         if form.is_valid():
             user = form.save()
-            login(request, user) # Đăng ký xong thì cho đăng nhập luôn
-            return redirect('trang_chu') # Chuyển hướng về trang chủ
+            login(request, user) 
+            return redirect('trang_chu') 
     else:
-        form = UserCreationForm()
+        form = TaoTaiKhoanForm() # Thay UserCreationForm bằng TaoTaiKhoanForm
     return render(request, 'quanly/dang_ky.html', {'form': form})
 
 # 2. HÀM ĐĂNG NHẬP
@@ -106,8 +110,14 @@ def dang_tin(request):
             
             # 3. Bây giờ mới chính thức lưu vào Database nè!
             phong_tro.save()
-            
+            # --- ĐOẠN MỚI THÊM: Xử lý lưu nhiều ảnh phụ ---
+            danh_sach_anh = request.FILES.getlist('hinh_anh_phu') # Lấy danh sách file
+            for file_anh in danh_sach_anh:
+                # Mỗi vòng lặp sẽ tạo ra 1 dòng trong database liên kết với phòng trọ này
+                HinhAnhPhong.objects.create(phong=phong_tro, anh=file_anh)
+            # -----------------------------------------------
             # 4. Lưu xong thì chuyển hướng về Trang chủ (hoặc trang danh sách phòng)
+            
             return redirect('trang_chu')
     else:
         form = PhongTroForm()
@@ -117,21 +127,28 @@ def dang_tin(request):
 #Chỉnh sửa tin sau khi đăng xoa sủa
 @login_required(login_url='dang_nhap')
 def chinh_sua_tin(request, id):
-    # Lấy đúng bài đăng có id này từ database
     phong_tro = get_object_or_404(PhongTro, id=id)
 
-    # CHỐT CHẶN BẢO MẬT: Nếu người đang đăng nhập KHÔNG PHẢI là chủ trọ thì đuổi về trang chủ
     if phong_tro.chu_tro != request.user:
         return redirect('trang_chu')
 
     if request.method == 'POST':
-        # Tham số instance=phong_tro giúp Django hiểu là "Hãy đè dữ liệu mới lên bài cũ này"
         form = PhongTroForm(request.POST, request.FILES, instance=phong_tro)
         if form.is_valid():
-            form.save()
+            phong_tro = form.save()
+            
+            # Xử lý xóa các ảnh phụ được chọn theo ID
+            ids_can_xoa = request.POST.getlist('xoa_anh_id')
+            if ids_can_xoa:
+                HinhAnhPhong.objects.filter(id__in=ids_can_xoa).delete()
+            
+            # Xử lý thêm ảnh phụ mới nếu có upload
+            danh_sach_anh_moi = request.FILES.getlist('hinh_anh_phu')
+            for file_anh in danh_sach_anh_moi:
+                HinhAnhPhong.objects.create(phong=phong_tro, anh=file_anh)
+                    
             return redirect('trang_chu')
     else:
-        # Nếu chỉ vào xem, thì lấy form chứa sẵn dữ liệu cũ ra
         form = PhongTroForm(instance=phong_tro)
         
     return render(request, 'quanly/chinh_sua_tin.html', {'form': form, 'phong_tro': phong_tro})
@@ -189,3 +206,26 @@ def khach_lien_he(request):
         'danh_sach_tin': danh_sach_tin
     }
     return render(request, 'quanly/khach_lien_he.html', context)
+
+# 1. HÀM XỬ LÝ KHI NGƯỜI DÙNG BẤM NÚT THẢ TIM
+@login_required(login_url='dang_nhap')
+def thich_phong(request, id):
+    phong = get_object_or_404(PhongTro, id=id)
+    
+    # Kiểm tra xem user này đã nằm trong danh sách người thích của phòng chưa
+    if request.user in phong.nguoi_thich.all():
+        # Nếu có rồi thì xóa đi (Bỏ thích)
+        phong.nguoi_thich.remove(request.user)
+    else:
+        # Nếu chưa có thì thêm vào (Thả tim)
+        phong.nguoi_thich.add(request.user)
+        
+    # Xong việc thì load lại đúng cái trang mà người dùng vừa đứng
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+
+# 2. HÀM HIỂN THỊ DANH SÁCH CÁC PHÒNG ĐÃ THÍCH
+@login_required(login_url='dang_nhap')
+def danh_sach_yeu_thich(request):
+    # Lấy ra tất cả các phòng mà user đang đăng nhập đã thả tim
+    danh_sach = request.user.phong_yeu_thich.all().order_by('-id')
+    return render(request, 'quanly/phong_yeu_thich.html', {'danh_sach_phong': danh_sach})
